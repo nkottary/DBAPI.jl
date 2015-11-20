@@ -1,4 +1,6 @@
-__precompile__()
+using Compat
+
+@compat __precompile__()
 
 module DBAPI
 

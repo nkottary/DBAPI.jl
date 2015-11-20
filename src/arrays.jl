@@ -1,5 +1,7 @@
 module ArrayInterfaces
 
+using Compat
+
 import Base: connect, close, getindex, start, next, done, length, isopen, isempty
 importall ..DBAPIBase
 
@@ -233,7 +235,7 @@ end
 
 ### Errors
 
-immutable ArrayInterfaceError{T<:AbstractString} <: DatabaseError{ColumnarArrayInterface}
+@compat immutable ArrayInterfaceError{T<:AbstractString} <: DatabaseError{ColumnarArrayInterface}
     message::T
 end
 

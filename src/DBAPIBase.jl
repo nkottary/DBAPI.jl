@@ -1,5 +1,7 @@
 module DBAPIBase
 
+using Compat
+
 export cursor,
     execute!,
     executemany!,
@@ -31,12 +33,14 @@ abstract DatabaseError{T<:DatabaseInterface} <: Exception
 abstract DatabaseConnection{T<:DatabaseInterface}
 abstract DatabaseCursor{T<:DatabaseInterface}
 abstract FixedLengthDatabaseCursor{T} <: DatabaseCursor{T}
-Base.linearindexing(::Type{FixedLengthDatabaseCursor}) = Base.LinearSlow()
+if VERSION >= v"0.4.0"
+    Base.linearindexing(::Type{FixedLengthDatabaseCursor}) = Base.LinearSlow()
+end
 Base.ndims(cursor::FixedLengthDatabaseCursor) = 2
 
 abstract DatabaseQuery
 
-immutable StringDatabaseQuery{T<:AbstractString} <: DatabaseQuery
+@compat immutable StringDatabaseQuery{T<:AbstractString} <: DatabaseQuery
     query::T
 end
 
@@ -51,7 +55,7 @@ end
 """
 Returns the interface type for any database object.
 """
-function interface{T<:DatabaseInterface}(
+@compat function interface{T<:DatabaseInterface}(
     database_object::Union{DatabaseCursor{T}, DatabaseConnection{T}, DatabaseError{T}}
 )
     return T
@@ -386,7 +390,7 @@ When 2d indexing is used on an `Associative`, the result is usually tuple keys.
 
 Returns the preallocated data structure.
 """
-function fetchintoarray!{T<:DatabaseInterface}(
+@compat function fetchintoarray!{T<:DatabaseInterface}(
         preallocated::Union{AbstractArray, Associative},
         cursor::FixedLengthDatabaseCursor{T},
         offset::Int=0,
@@ -450,7 +454,7 @@ defined above.
 
 Returns the preallocated data structure.
 """
-function fetchintorows!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function fetchintorows!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         preallocated::Union{AbstractArray{U}, AssociativeVK{U}},
         cursor::FixedLengthDatabaseCursor{T},
         offset::Int=0,
@@ -487,7 +491,7 @@ data.
 
 Returns the preallocated data structure.
 """
-function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         preallocated::Union{AbstractArray{U}, AssociativeVK{U}},
         cursor::FixedLengthDatabaseCursor{T},
         offset::Int=0,
@@ -508,7 +512,7 @@ function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associa
     return preallocated, offset_row
 end
 
-function fetchintoarray!{T<:DatabaseInterface}(
+@compat function fetchintoarray!{T<:DatabaseInterface}(
         preallocated::Union{AbstractArray, Associative},
         cursor::DatabaseCursor{T},
         offset::Int=0,
@@ -517,7 +521,7 @@ function fetchintoarray!{T<:DatabaseInterface}(
     throw(NotSupportedError{T}())
 end
 
-function fetchintorows!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function fetchintorows!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         preallocated::Union{AbstractArray{U}, AssociativeVK{U}},
         cursor::DatabaseCursor{T},
         offset::Int=0,
@@ -526,7 +530,7 @@ function fetchintorows!{T<:DatabaseInterface, U<:Union{AbstractArray, Associativ
     throw(NotSupportedError{T}())
 end
 
-function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         preallocated::Union{AbstractArray{U}, AssociativeVK{U}},
         cursor::DatabaseCursor{T},
         offset::Int=0,
@@ -535,15 +539,15 @@ function fetchintocolumns!{T<:DatabaseInterface, U<:Union{AbstractArray, Associa
     throw(NotSupportedError{T}())
 end
 
-typealias Orientation Union{Val{:rows}, Val{:columns}, Val{:array}}
+@compat typealias Orientation Union{Val{:rows}, Val{:columns}, Val{:array}}
 
-immutable DatabaseFetcher{O<:Orientation, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}
+@compat immutable DatabaseFetcher{O<:Orientation, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}
     orientation::O
     preallocated::U
     cursor::FixedLengthDatabaseCursor{T}
 end
 
-function DatabaseFetcher{T, U}(
+@compat function DatabaseFetcher{T, U}(
     # this is the actual required type for the `preallocated` field,
     # however there is no way to express that through parameters in the
     # type definition
@@ -562,14 +566,14 @@ fetch_function(::DatabaseFetcher{Val{:array}}) = fetchintoarray!
 first_empty(a::Associative) = isempty(first(values(a)))
 first_empty(a) = isempty(first(a))
 
-function isempty{O<:Union{Val{:rows}, Val{:array}}, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function isempty{O<:Union{Val{:rows}, Val{:array}}, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         fetcher::DatabaseFetcher{O, T, U}
     )
 
     isempty(fetcher.preallocated)
 end
 
-function isempty{O<:Val{:columns}, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
+@compat function isempty{O<:Val{:columns}, T<:DatabaseInterface, U<:Union{AbstractArray, Associative}}(
         fetcher::DatabaseFetcher{O, T, U}
     )
 
